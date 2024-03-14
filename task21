@@ -1,0 +1,33 @@
+#!/bin/bash
+
+cr=0
+fileName=""
+progName=""
+
+if [ "$1" == -c ]
+then
+	cr=1
+	shift
+	fileName="$1"
+	shift
+	progName="$1"
+else
+	fileName="$1"
+        shift
+        progName="$1"
+fi
+progPath=`which "$progName"`
+if [ "$cr" -eq 1 ]
+then
+	sha=`sha512sum "$progPath"`
+	echo "$sha" > "$fileName"
+else
+	sha=`sha512sum "$progPath"`
+	oldsha=`cat "$fileName"`
+	if [ "$sha" == "$oldsha" ]
+	then
+		echo "$progName" OK
+	else
+		echo "$progName" changed
+	fi
+fi

@@ -1,0 +1,71 @@
+#!/bin/bash
+
+cr=0
+fileName=""
+dirName=""
+
+while getopts cd:f: arg
+do
+	case "$arg" in
+		c)
+			cr=1;;
+		d)
+			dirName="$OPTARG";;
+		f)
+			fileName="$OPTARG";;
+		*)
+			echo "err";;
+	esac
+done
+
+array=()
+while IFS= read -r -d $'\0'; do
+	if [[ -f "$REPLY" ]]
+	then
+	array+=("$REPLY")
+	fi
+done < <(find  "$dirName" -print0)
+i=0
+size=${#array[*]}
+if [ "$cr" -eq 1 ]
+then
+while [ "$size" -gt "$i" ]
+do
+	md5=`md5sum ${array[i]}`
+	echo "$md5" >> "$fileName"
+	((++i))
+done
+else
+while [ "$size" -gt "$i" ]
+do
+	IFS=$'\n'
+	tmp=0
+	for a in $( cat "$fileName" )
+	do
+		IFS=' '
+		md=()
+		read -a md <<< "$a"
+		if [ ${array[i]} == ${md[1]} ]
+		then
+			md5=`md5sum ${array[i]}`
+			if [ "$md5" == "$a" ]
+			then
+				echo ${array[i]} OK
+				tmp=1
+				break
+			else
+			echo ${array[i]} changed
+			tmp=1
+			break
+			fi
+		fi
+	done
+	if [ "$tmp" -eq 0 ]
+	then
+		echo ${array[i]} is a new file
+	fi
+	((i++))
+done
+fi
+
+unset IFS
